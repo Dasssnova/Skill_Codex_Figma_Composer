@@ -1,4 +1,4 @@
-# Figma Compozer
+# Figma Composer
 
 `figma-compozer` превращает UI-референсы в Figma в структурированные и редактируемые макеты.
 
