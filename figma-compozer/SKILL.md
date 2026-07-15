@@ -34,6 +34,7 @@ Rebuild every valid reference directly in the supplied Figma file. Treat the ref
 - Use editable text, frames, shapes, fills, strokes, effects, masks, and native Figma properties where they preserve the observed result.
 - Fill every icon, media, avatar, illustration, and system-keyboard placeholder with the required top-to-bottom `#D8E0EA` to `#BAC6D7` linear gradient at `58%` Fill opacity.
 - Detect continuous corners independently from radius and apply native Figma Corner smoothing whenever supported by the reference.
+- Detect translucent layers independently from light colors, gradients, blur, and shadows. Reproduce transparency with native Figma Opacity controls at the narrowest correct level instead of baking it into RGB colors.
 - Never add documentation, design-system, specimen, annotation, or showcase frames.
 - Do not claim pixel accuracy when a reference is obscured or too low-resolution; make the best supported reconstruction and state the limitation briefly.
 

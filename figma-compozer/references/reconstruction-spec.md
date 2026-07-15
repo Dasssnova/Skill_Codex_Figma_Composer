@@ -1866,34 +1866,59 @@ Examples:
 
 Do not merge clearly different effects into one approximate shadow.
 
-# Opacity Reconstruction
+# Opacity Detection and Reconstruction
 
-When a visible element or property is transparent, reproduce it using native Figma:
+Analyze transparency independently from hue, lightness, gradient, blur, glow, and shadow.
 
-`Opacity`
+Before assigning an opaque color, test whether the visible result is produced by compositing over the background. Use the following evidence:
 
-Determine whether opacity applies to:
+* background color or content remains partially visible through the element;
+* the same surface changes appearance when it crosses different backgrounds;
+* internal texture or underlying edges remain visible;
+* Fill, Stroke, text, icon, and shadow fade together by the same ratio;
+* only one visual property fades while other properties remain fully opaque;
+* repeated states reveal an opaque and a translucent version of the same base color;
+* overlapping translucent layers become denser where they intersect;
+* a disabled or inactive state preserves hue while reducing visual density.
 
-* the complete layer;
-* the Fill only;
-* the Stroke only;
-* the shadow only;
-* a child element;
-* an overlay;
-* a surface;
-* a text layer;
+Exclude misleading causes before estimating opacity:
+
+* screenshot compression and antialiasing;
+* a genuinely lighter solid color;
+* a low-contrast gradient;
+* Background blur or Layer blur;
+* Drop shadow, glow, or reflected light;
+* blend modes other than Normal;
+* image content already containing baked transparency.
+
+Estimate the base color and opacity together. When a plausible base color is visible elsewhere in the same reference, compare the composited result against that instance. Test nearby opacity values in Figma and choose the percentage that preserves both the foreground hue and the amount of background showing through.
+
+Reproduce transparency with native Figma opacity controls. Determine whether opacity applies to:
+
+* the complete layer or parent group;
+* one Fill paint;
+* the complete Fill stack;
+* one gradient stop;
+* the Stroke paint;
+* one Effect such as a shadow;
+* one child element;
+* text, icon, overlay, or surface content;
 * a wireframe placeholder.
 
-Use the most specific opacity control available.
+Use the narrowest correct opacity control:
 
-Examples:
+* use layer `Opacity` when the complete element, all its paints, effects, and children fade together;
+* use Fill opacity when only the surface Fill is translucent;
+* use stop opacity when only part of a gradient fades;
+* use stroke-paint opacity when only the border is translucent;
+* use effect color alpha when only a shadow or glow is translucent;
+* use child-layer Opacity when one child fades independently from its parent.
 
-* if only the Fill is transparent, adjust Fill opacity;
-* if only the Stroke is transparent, adjust stroke-paint opacity;
-* if only the shadow is transparent, adjust shadow opacity;
-* if the complete element and all children are faded equally, adjust layer opacity.
+Set the chosen percentage through native Figma Opacity or paint alpha. Keep the underlying RGB color as the best-supported uncomposited color.
 
-Do not reduce full-layer opacity when only one visual property is translucent.
+Do not imitate transparency by selecting a lighter or background-mixed RGB color. Do not place an extra white or gray overlay merely to simulate reduced opacity. Do not reduce parent opacity when only one child or paint is translucent. Do not apply both layer Opacity and paint alpha unless the reference visibly requires their compounded result.
+
+For nested translucent layers, account for compounded opacity and apply each value at the structural level supported by the reference.
 
 # Translucent Surfaces
 
@@ -2301,7 +2326,12 @@ Before finalizing every styled element, verify that:
 * transparent fills use Fill opacity;
 * transparent strokes use stroke-paint opacity;
 * transparent shadows use effect opacity;
-* full-layer opacity is used only when the complete element is faded;
+* full-layer opacity is used only when the complete element, its children, paints, and effects fade together;
+* translucent layers use native Figma Opacity or paint alpha instead of background-mixed RGB colors;
+* parent opacity is not reduced when only one child, Fill, Stroke, or Effect is translucent;
+* layer Opacity and paint alpha are not compounded unless the reference supports both;
+* overlapping and nested translucent layers preserve the correct compositing density;
+* the reconstructed transparent element remains plausible over every visible background it crosses;
 * effects are not included in element dimensions;
 * shadows do not alter internal padding;
 * equivalent styling is consolidated within the reference;
