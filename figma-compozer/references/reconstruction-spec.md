@@ -282,7 +282,7 @@ Do not replace individual keyboard keys with separate wireframe rectangles.
 
 ## Keyboard Replacement
 
-Replace the entire visible system-keyboard region with one neutral gray rectangular area.
+Replace the entire visible system-keyboard region with one editable placeholder rectangle or frame using the shared placeholder gradient.
 
 The keyboard replacement must:
 
@@ -295,11 +295,7 @@ The keyboard replacement must:
 * preserve clipping at the screen edges;
 * contain no keys, labels, icons, dividers, or internal details.
 
-Use a neutral gray fill such as:
-
-`#D0D0D0`
-
-The exact gray may be adjusted slightly when necessary to remain visually distinguishable from the application background.
+Use exactly the shared vertical linear gradient `#D8E0EA` to `#BAC6D7` at `58%` overall Fill opacity. Do not substitute a solid gray or adjust these colors per reference.
 
 Name the layer:
 
@@ -347,16 +343,21 @@ If an application-owned toolbar visually overlaps the keyboard, preserve the too
 
 ## Keyboard Placeholder Styling
 
-The keyboard placeholder should normally use:
+The keyboard placeholder must use the shared placeholder Fill:
 
-* a solid neutral gray Fill;
+* native Figma linear gradient;
+* vertical direction from top to bottom;
+* top stop: `#D8E0EA` at position `0%`;
+* bottom stop: `#BAC6D7` at position `100%`;
+* overall Fill opacity: `58%`;
 * no individual keys;
 * no text;
 * no icons;
 * no decorative details;
-* no unsupported gradient;
 * no unsupported Stroke;
 * no unsupported Effects.
+
+Do not apply `58%` separately to both stop colors when the native Fill opacity can represent it. Use one editable gradient Fill with overall opacity `58%`.
 
 If the system keyboard region visibly has a distinct top divider, ignore that divider unless it is necessary to preserve the main keyboard-region boundary.
 
@@ -398,7 +399,7 @@ For every reference, follow this order:
 3. Exclude the operating-system status bar.
 4. Preserve the top safe-area geometry.
 5. Detect the operating-system keyboard when present.
-6. Replace the keyboard with one neutral gray area.
+6. Replace the keyboard with one editable placeholder using the shared vertical gradient.
 7. Preserve all application geometry around the keyboard.
 8. Identify the screen background.
 9. Identify top-level application regions.
@@ -1584,24 +1585,33 @@ Do not simulate a squircle by increasing the corner radius.
 
 # Figma Corner Smoothing
 
-When a squircle, superellipse, or continuous corner is visible:
+Determine corner radius and Corner smoothing as two independent properties. Never increase radius to imitate a continuous corner.
+
+For every clearly visible rounded container:
+
+1. Inspect the straight-to-curve transition on both axes.
+2. Compare the length of the straight edge before the curve begins.
+3. Compare diagonal fullness around the 45-degree region.
+4. Exclude stroke thickness, shadow spread, blur, antialiasing, image scaling, and screenshot compression from the perceived contour.
+5. Test a standard circular corner at `0%` smoothing first.
+6. When the curve remains too abrupt or too circular, compare representative smoothing candidates such as `30%`, `60%`, and `100%` while keeping the base radius fixed.
+7. Refine between the closest candidates until the tangent transition and diagonal fullness match.
+8. Recheck the result at the elements actual output size, not only while zoomed in.
+
+When a squircle, superellipse, or continuous corner is supported by the evidence:
 
 * use an editable Figma frame or rectangle;
-* apply the closest modular base radius;
-* enable Figma `Corner smoothing`;
-* adjust the smoothing percentage independently from the radius;
-* compare the straight-to-curve transition;
-* compare diagonal fullness;
-* validate all four corners.
+* apply the closest supported base radius;
+* set native Figma `Corner smoothing` through the node\x27s Corner smoothing property;
+* keep Corner smoothing independent from radius;
+* validate all four corners and any unequal per-corner radii;
+* preserve the same setting on repeated elements with equivalent geometry.
 
-Do not automatically use `100%` Corner smoothing.
+Do not draw extra vectors, stack duplicate rounded rectangles, add masks, or use blur to imitate Corner smoothing when the native property is available.
 
-Equivalent squircle elements within one reference should share:
+Do not automatically use `100%`. Use `0%` for genuinely circular corners and the evidence-supported percentage for continuous corners.
 
-* the same modular radius;
-* the same Corner smoothing percentage.
-
-A reference may contain both standard circular corners and squircles.
+Equivalent continuous-corner elements within one reference should share the same supported radius and Corner smoothing percentage. A reference may contain both ordinary rounded rectangles and multiple continuous-corner systems.
 
 # Independent Corners
 
@@ -1971,7 +1981,7 @@ Do not recreate detailed:
 * charts;
 * complex graphics.
 
-Replace them with neutral gray wireframe shapes.
+Replace them with editable wireframe placeholder shapes using the shared vertical gradient.
 
 Use:
 
@@ -1995,9 +2005,15 @@ Preserve:
 * Effects belonging to the original container;
 * Opacity belonging to the original container.
 
-Use the neutral gray Fill:
+Use the shared placeholder Fill for every placeholder shape:
 
-`#B8B8B8`
+* native Figma linear gradient;
+* vertical direction from top to bottom;
+* top stop: `#D8E0EA` at `0%`;
+* bottom stop: `#BAC6D7` at `100%`;
+* overall Fill opacity: `58%`.
+
+Keep the gradient editable and aligned to the placeholders local top and bottom bounds. Rotate the complete placeholder after applying the vertical local gradient when the original asset is rotated.
 
 Do not add:
 
@@ -2097,20 +2113,30 @@ Do not normalize colors across different references.
 
 # Layout Hierarchy
 
-Reconstruct the actual parent-child hierarchy.
+Reconstruct the actual parent-child hierarchy with native Figma Auto Layout.
 
-Use:
+Auto Layout is mandatory for logical interface blocks, including:
 
-* Auto Layout when it matches the visible structure;
-* nested Auto Layout for different spacing levels;
-* absolute positioning for overlays and independently anchored elements;
-* rotated parent frames for grouped angled compositions.
+* cards and card content;
+* buttons and segmented controls;
+* input fields, search fields, and form rows;
+* top and bottom navigation bars;
+* menus, tabs, toolbars, and action rows;
+* lists, repeated rows, and grouped metadata;
+* sheets, panels, banners, and grouped controls.
 
-Do not add:
+For each logical block:
 
-* empty wrappers;
-* invisible spacer layers;
-* unnecessary groups.
+1. Create a frame rather than a loose group.
+2. Enable horizontal or vertical Auto Layout according to the visible flow.
+3. Set padding, gap, alignment, and distribution from the reference.
+4. Use `Hug contents`, `Fill container`, or fixed sizing according to the observed behavior and required geometry.
+5. Use nested Auto Layout when children have a different direction or spacing rhythm.
+6. Preserve the measured final bounds after Auto Layout is enabled.
+
+Use absolute positioning only for children that visibly overlap, float, rotate independently, or anchor outside the normal content flow. A container with one absolute child can still use Auto Layout for its remaining logical content.
+
+Do not replace Auto Layout with loose groups, invisible spacer layers, or manually positioned siblings when the elements form a logical block. Do not add empty wrappers or unnecessary groups.
 
 # Layer Naming
 
@@ -2305,7 +2331,7 @@ When a system keyboard is visible, verify that:
 * no individual keyboard keys were reconstructed;
 * no keyboard labels or icons were reconstructed;
 * no predictive-text content was reconstructed;
-* the complete keyboard region was replaced with one gray area;
+* the complete keyboard region was replaced with one shared-gradient placeholder;
 * the placeholder matches the original keyboard bounds;
 * the root frame retains the exact source-frame width, height, corner radii, Corner smoothing, and clipping;
 * application content above the keyboard remains in its original position;
@@ -2322,19 +2348,19 @@ Every root frame must exactly match its source frame's width, height, four corne
 Use:
 
 * editable text layers;
-* Auto Layout where appropriate;
-* nested Auto Layout where appropriate;
-* absolute positioning where required;
+* native Auto Layout for every logical UI block;
+* nested Auto Layout for internal flows and spacing levels;
+* absolute positioning only for visibly overlaid, floating, or independently anchored elements;
 * local text styles scoped to the reference;
 * shared typography styles for similar text within the reference;
 * editable frames, rectangles, circles, and vectors;
 * native Figma Fill for solid colors and gradients;
-* Corner smoothing where visually required;
+* native Figma Corner smoothing with an evidence-supported percentage where visually required;
 * `Position → Rotation` for intentional angles;
 * Figma Stroke for visible borders;
 * Figma Effects for shadows, blur, and glow;
 * Figma Opacity for visible transparency;
-* one editable neutral-gray rectangle or frame for the system keyboard.
+* one editable shared-gradient rectangle or frame for the system keyboard.
 
 Do not:
 
@@ -2377,7 +2403,7 @@ Before finalizing every reference, verify that:
 * the top safe area was preserved;
 * application content was not shifted upward;
 * the operating-system keyboard was not reconstructed;
-* the system keyboard was replaced by one neutral gray area;
+* the system keyboard was replaced by one `#D8E0EA` to `#BAC6D7` vertical-gradient placeholder at `58%` Fill opacity;
 * application content around the keyboard was not shifted;
 * exact OCR transcription was not prioritized over visual geometry;
 * every text block has the correct number of lines;
@@ -2401,8 +2427,9 @@ Before finalizing every reference, verify that:
 * padding and gaps match;
 * all visible solid fills and gradients use native Figma Fill;
 * gradient type, direction, stops, colors, positions, and opacity match;
-* standard and smoothed corners were classified correctly;
-* visible squircles use Corner smoothing;
+* standard and smoothed corners were classified independently from radius;
+* visible continuous corners use native Figma Corner smoothing with an evidence-supported percentage;
+* Corner smoothing was not imitated with extra radius, vectors, masks, duplicate shapes, or blur;
 * intentional angles use `Position → Rotation`;
 * all visible outlines use Figma Stroke;
 * all visible shadows and blur use Figma Effects;
@@ -2411,7 +2438,9 @@ Before finalizing every reference, verify that:
 * gradients were not rasterized;
 * effects were not included in element dimensions;
 * global perspective was not mistaken for intentional rotation;
+* all graphical and keyboard placeholders use the editable top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * wireframe placeholders preserve dimensions, shape, smoothing, rotation, Stroke, Effects, and Opacity;
+* cards, buttons, fields, navigation, menus, panels, lists, and repeated logical blocks use native Auto Layout;
 * no unsupported elements were added;
 * all practical layers remain editable;
 * no documentation or explanatory information appears on the canvas.
@@ -2433,13 +2462,13 @@ For every valid source frame containing a UI reference image, output:
 * accurate element geometry;
 * accurate solid colors and gradients through native Figma Fill;
 * accurate circular, squircle, and superellipse corners;
-* Figma Corner smoothing where visually required;
+* native Figma Corner smoothing with the evidence-supported percentage where visually required;
 * intentional angles reproduced through `Position → Rotation`;
 * visible borders reproduced through Stroke;
 * visible shadows, blur, and glow reproduced through Effects;
 * visible transparency reproduced through Opacity;
-* icons and media replaced by neutral gray wireframe placeholders;
-* system keyboard replaced by one neutral gray area;
+* icons and media replaced by editable wireframe placeholders using the vertical `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
+* system keyboard replaced by one placeholder using the same gradient;
 * no operating-system status bar;
 * no additional explanatory content.
 

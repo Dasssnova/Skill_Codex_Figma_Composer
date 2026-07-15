@@ -30,8 +30,10 @@ Rebuild every valid reference directly in the supplied Figma file. Treat the ref
 
 - Prefer several small, verifiable Figma writes over one large write.
 - Reuse styles or components only within one reference and only when the reference demonstrates repetition.
-- Use editable text, frames, shapes, fills, strokes, effects, masks, and auto layout where they preserve the observed result.
-- Use neutral wireframes for icons and media exactly where required by the reconstruction specification.
+- Build logical UI blocks such as cards, buttons, input fields, navigation bars, menus, lists, toolbars, and repeated content groups with native Figma Auto Layout. Use nested Auto Layout for internal structure and spacing levels; use absolute positioning only for visibly overlaid, floating, or independently anchored children.
+- Use editable text, frames, shapes, fills, strokes, effects, masks, and native Figma properties where they preserve the observed result.
+- Fill every icon, media, avatar, illustration, and system-keyboard placeholder with the required top-to-bottom `#D8E0EA` to `#BAC6D7` linear gradient at `58%` Fill opacity.
+- Detect continuous corners independently from radius and apply native Figma Corner smoothing whenever supported by the reference.
 - Never add documentation, design-system, specimen, annotation, or showcase frames.
 - Do not claim pixel accuracy when a reference is obscured or too low-resolution; make the best supported reconstruction and state the limitation briefly.
 
