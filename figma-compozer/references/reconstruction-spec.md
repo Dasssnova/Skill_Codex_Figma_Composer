@@ -47,30 +47,30 @@ The goal is to reproduce the visual system of every reference independently.
 
 # Reference Source
 
-Use only Figma layers whose exact name is:
+Use reference images by their structural role inside Figma, not by layer names.
 
-`Composition__reference`
+Within the node, selection, page area, or frames supplied by the user, identify image layers that visibly contain a complete application-screen reference and are nested inside a parent Figma frame.
 
-These layers are the only valid source of visual information.
+Layer and frame names are not evidence and must never determine whether a reference is valid. Accept any name, abbreviation, spelling, language, default Figma name, or empty-looking label. Examples such as `Compos-refer`, `Comp_ref`, and `Composition_ref` are valid only because the layers contain reference images inside frames, not because of their text.
 
-Ignore every other layer, frame, section, component, annotation, style guide, design-system section, example, image, or asset outside a layer named exactly:
+Do not require `Composition__reference` or any other exact naming convention.
 
-`Composition__reference`
+Treat the immediate parent frame that establishes the visible reference viewport as the source frame. If the image is nested inside groups or wrappers, walk upward to the nearest frame that defines the complete screen bounds, clipping, and corner geometry. Do not use an outer presentation section or device-mockup frame when a nearer frame defines the actual screen.
 
-Do not use layers with similar names, including:
+A valid source frame must provide:
 
-* `Composition`;
-* `Reference`;
-* `Composition_reference`;
-* `Composition__references`;
-* `Composition__reference_copy`;
-* any other variation.
+* a visible reference image representing a complete or intentionally cropped UI viewport;
+* explicit frame width and height;
+* a stable coordinate system for the image;
+* the clipping and corner geometry of the intended screen.
 
-If several layers named `Composition__reference` exist, treat each one as a separate screen reference unless they clearly form one continuous screen.
+Ignore unrelated images, illustrations, thumbnails, assets, style guides, and media that do not represent a complete UI reference. When the user supplies a specific selection or linked nodes, do not scan unrelated areas of the file.
+
+If several valid source frames exist, treat each one as a separate screen reference unless their visible image content clearly forms one continuous screen.
 
 # Independent Reference Rule
 
-Analyze every `Composition__reference` independently.
+Analyze every valid source frame independently.
 
 Do not assume that different references:
 
@@ -95,7 +95,7 @@ For every reference:
 3. Identify its own size relationships.
 4. Identify its own color and gradient relationships.
 5. Identify its own spacing rhythm.
-6. Identify its own corner geometry.
+6. Read and preserve its source-frame dimensions and corner geometry.
 7. Identify its own component proportions.
 8. Identify its own stroke, shadow, blur, and opacity system.
 9. Create a separate reconstructed screen.
@@ -108,75 +108,42 @@ Consolidation and consistency must be applied only within the same reference.
 
 # Reference Measurement Baseline
 
-Assume that the actual visible application viewport in every reference has an exact width of:
+Use the source frame as the sole coordinate and measurement baseline for its reconstruction.
 
-`393 px`
+Record the source frame's exact properties:
 
-Use 393 px as the fixed measurement baseline.
+* width and height;
+* aspect ratio;
+* top-left coordinate system;
+* clipping behavior;
+* top-left, top-right, bottom-right, and bottom-left corner radii;
+* Corner smoothing value when available.
 
-Calculate all properties relative to this width, including:
+Calculate all properties in source-frame pixels, including positions, element sizes, typography, spacing, strokes, effects, placeholders, and safe areas.
 
-* x-positions;
-* y-positions;
-* element widths;
-* element heights;
-* font sizes;
-* line heights;
-* text-frame dimensions;
-* cards;
-* buttons;
-* input fields;
-* tabs;
-* navigation elements;
-* icon placeholders;
-* media placeholders;
-* corner radii;
-* screen margins;
-* padding;
-* gaps;
-* overlay insets;
-* stroke widths;
-* shadow offsets;
-* shadow blur and spread;
-* keyboard-placeholder dimensions.
+Do not assume a fixed device model, viewport width, viewport height, or aspect ratio. References may be placed in frames of any resolution or orientation.
 
-Do not calculate measurements from:
+Use the parent frame's dimensions even when the nested image has different intrinsic pixel dimensions, is scaled, or is cropped. Map visible image content into the parent-frame coordinate system according to the image layer's rendered bounds, transform, crop, and fill mode. Do not use the uploaded bitmap resolution as the output-frame size.
 
-* the dimensions of the uploaded image;
-* the size of a phone mockup;
-* the device body;
-* bezels;
-* presentation backgrounds;
-* external decorations;
-* arbitrary screenshot scaling.
-
-Treat the visible UI viewport as exactly 393 px wide.
+Ignore phone hardware, bezels, presentation backgrounds, and decorations outside the source frame.
 
 # Output Frames
 
-For every valid reference, create one editable Figma root frame sized exactly:
+For every valid source frame, create one editable Figma root frame whose width and height exactly match that source frame.
 
-`393 × 852 px`
+Copy the source frame's geometry exactly:
 
-Use clear names such as:
+* four corner-radius values;
+* Corner smoothing;
+* clipping behavior.
 
-* `Screen 01`;
-* `Screen 02`;
-* `Screen 03`.
+Preserve unequal per-corner radii when present. Do not infer device radii from the frame's name or nominal device model.
 
-Each frame must contain only the reconstructed application interface corresponding to that reference.
+Use clear output names such as `Screen 01`, `Screen 02`, and `Screen 03`; source-frame names do not control output dimensions, content, device assumptions, or styling.
 
-Do not:
+Each output frame must contain only the reconstructed application interface corresponding to that reference.
 
-* combine several references into one screen;
-* create documentation frames;
-* create typography specimen pages;
-* create design-system pages;
-* create component libraries;
-* create component showcases;
-* add usage examples;
-* add measurement frames;
-* add explanatory sections between screens.
+Do not combine several references into one screen or create documentation, specimen, design-system, component-showcase, measurement, or explanatory frames.
 
 # Reconstruction Priorities
 
@@ -205,15 +172,15 @@ Do not prioritize exact text transcription over visual and typographic accuracy.
 
 Before analyzing individual elements:
 
-1. Locate the actual UI viewport inside `Composition__reference`.
-2. Identify its top, right, bottom, and left boundaries.
-3. Exclude everything outside the actual screen.
-4. Treat the detected viewport width as exactly 393 px.
-5. Map the complete viewport to a 393 × 852 px Figma frame.
-6. Correct global perspective distortion caused by a photographed or tilted device.
-7. Correct non-uniform scaling when the reference appears stretched.
-8. Establish a front-facing screen coordinate system.
-9. Measure all application elements relative to the complete frame.
+1. Read the source frame's exact width, height, clipping, four corner radii, and Corner smoothing.
+2. Locate the actual visible UI viewport within those frame bounds.
+3. Identify its top, right, bottom, and left boundaries in source-frame coordinates.
+4. Exclude phone hardware or decoration visible inside the image when it is not part of the UI.
+5. Map the rendered reference image into the source frame's coordinate system using its bounds, transform, crop, and fill mode.
+6. Correct global perspective distortion caused by a photographed or tilted device while retaining the source-frame output size.
+7. Correct non-uniform image distortion without changing the source-frame dimensions.
+8. Establish a front-facing coordinate system whose origin and extent match the source frame.
+9. Measure all application elements relative to the complete source frame.
 
 Ignore:
 
@@ -263,7 +230,7 @@ Removing the status bar must not shift the application interface upward.
 
 Preserve:
 
-* the complete 393 × 852 px frame;
+* the complete source-frame width and height;
 * the original top safe-area height;
 * the screen background underneath the omitted status bar;
 * the original y-position of the first application-owned element.
@@ -275,7 +242,7 @@ Do not:
 * reduce the frame height;
 * crop the top safe area;
 * move the application header upward;
-* remap the area below the status bar to the complete 852 px height;
+* remap the area below the status bar to the complete source-frame height;
 * remove application-owned navigation near the top.
 
 Distinguish between:
@@ -360,9 +327,7 @@ Do not:
 * reconstruct hidden content behind the keyboard;
 * reduce the root-frame height.
 
-The root frame must remain exactly:
-
-`393 × 852 px`
+The root frame must retain the exact width, height, four corner radii, Corner smoothing, and clipping behavior of its source frame.
 
 ## Application-Owned Elements Above the Keyboard
 
@@ -399,7 +364,7 @@ The purpose is to preserve layout geometry, not system-UI details.
 
 # Core Evidence Rule
 
-Reconstruct only elements visibly supported by the current `Composition__reference`.
+Reconstruct only elements visibly supported by the current valid reference image.
 
 Every created Figma layer must correspond to visible evidence.
 
@@ -429,7 +394,7 @@ Do not invent hidden dimensions or hidden content.
 For every reference, follow this order:
 
 1. Detect the complete viewport.
-2. Calibrate it to 393 × 852 px.
+2. Calibrate it to its parent source frame's exact coordinate system and dimensions.
 3. Exclude the operating-system status bar.
 4. Preserve the top safe-area geometry.
 5. Detect the operating-system keyboard when present.
@@ -564,7 +529,7 @@ Support every pairing decision with visible evidence from that reference. Compar
 
 Do not force a single-family solution when headings and body text visibly belong to different families. Do not invent a font pair when both roles are supported by one family.
 
-A font family or font pair selected for one reference is not a candidate default for any other reference. Start the font analysis from zero for every `Composition__reference`, even when references are adjacent or appear related.
+A font family or font pair selected for one reference is not a candidate default for any other reference. Start the font analysis from zero for every valid source frame, even when references are adjacent or appear related.
 
 # Typeface Identification
 
@@ -1031,15 +996,17 @@ For every visible element, determine:
 * Stroke;
 * Effects.
 
-Use the calibrated 393 px viewport as the measurement baseline.
+Use the calibrated width and height of the current source frame as the measurement baseline.
 
 # Modular Size and Spacing System
 
 Use a consistent modular measurement system inside each reference.
 
-All final pixel dimensions, positions, spacing values, and radii must be divisible by:
+For reconstructed UI elements inside the root frame, prefer pixel dimensions, positions, spacing values, and radii divisible by:
 
 `2 px`
+
+This modular preference never applies to the root output frame's width, height, four corner radii, or Corner smoothing. Copy those source-frame properties exactly, including odd or fractional values. Visual fidelity also overrides modular rounding when the source clearly supports another value.
 
 Prefer values divisible by:
 
@@ -1647,7 +1614,7 @@ Determine independently:
 
 Preserve different corner values when visibly required.
 
-Every final radius must be divisible by 2.
+Internal UI-element radii should follow the modular system when visually accurate. The root output frame's four radii must instead match the source frame exactly, including odd, unequal, or fractional values.
 
 # Rotation and Angled Elements
 
@@ -1695,7 +1662,7 @@ The element’s unrotated dimensions and anchor coordinates must still follow th
 If the complete phone or screen is photographed at an angle:
 
 * correct the global perspective first;
-* reconstruct the screen as a front-facing 393 × 852 px frame.
+* reconstruct the screen as a front-facing frame with the exact width, height, and corner geometry of the source frame.
 
 After perspective correction, preserve only angles that belong to the actual interface design.
 
@@ -2340,7 +2307,7 @@ When a system keyboard is visible, verify that:
 * no predictive-text content was reconstructed;
 * the complete keyboard region was replaced with one gray area;
 * the placeholder matches the original keyboard bounds;
-* the root frame remains 393 × 852 px;
+* the root frame retains the exact source-frame width, height, corner radii, Corner smoothing, and clipping;
 * application content above the keyboard remains in its original position;
 * application-owned accessory controls were preserved;
 * hidden application content was not invented;
@@ -2350,9 +2317,7 @@ When a system keyboard is visible, verify that:
 
 Create one editable root frame per valid reference.
 
-Every root frame must be exactly:
-
-`393 × 852 px`
+Every root frame must exactly match its source frame's width, height, four corner radii, Corner smoothing, and clipping behavior.
 
 Use:
 
@@ -2399,15 +2364,15 @@ Do not:
 
 Before finalizing every reference, verify that:
 
-* only `Composition__reference` was used;
+* reference images were identified by structural role inside the user-supplied source frames, never by layer or frame names;
 * the reference was analyzed independently;
 * fonts were not inherited from another reference;
 * typography reflects the individual reference;
 * similar semantic and visual text layers inside the reference use one shared style;
 * no unnecessary near-duplicate typography styles remain;
 * typography was not consolidated across different references;
-* the viewport width was treated as exactly 393 px;
-* the root frame is exactly 393 × 852 px;
+* the source frame's exact width and height were used as the measurement baseline;
+* the output frame exactly matches the source frame's width, height, four corner radii, Corner smoothing, and clipping;
 * the operating-system status bar was omitted;
 * the top safe area was preserved;
 * application content was not shifted upward;
@@ -2421,7 +2386,7 @@ Before finalizing every reference, verify that:
 * line height and vertical spacing match;
 * kerning and text density match;
 * alignment matches;
-* all final pixel dimensions are divisible by 2;
+* internal UI values follow the modular system where visually accurate, while root-frame dimensions and corner properties remain exact;
 * major layout values prefer multiples of 8;
 * common component values prefer multiples of 4;
 * 2 px increments are used for fine adjustments;
@@ -2455,10 +2420,10 @@ Before finalizing every reference, verify that:
 
 The only required output is the final editable Figma reconstruction.
 
-For every valid `Composition__reference`, output:
+For every valid source frame containing a UI reference image, output:
 
 * one complete application screen;
-* exact size: 393 × 852 px;
+* exact width and height copied from the corresponding source frame;
 * typography reconstructed independently for that reference;
 * similar semantic and visual typography consolidated into one shared style within the reference;
 * text blocks with matching line count, density, and spacing;
@@ -2493,4 +2458,4 @@ Do not return:
 * usage examples;
 * explanatory text.
 
-The final Figma canvas must contain only the reconstructed editable `393 × 852 px` application screens.
+The final Figma canvas must contain only the reconstructed editable application screens, each matching its corresponding source frame's dimensions and corner geometry.

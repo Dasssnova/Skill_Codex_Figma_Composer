@@ -1,4 +1,4 @@
 interface:
   display_name: "Figma Compozer"
-  short_description: "Reconstruct mobile references as editable Figma UI"
-  default_prompt: "Use $figma-compozer to reconstruct the Composition__reference layers from this Figma link as editable screens."
+  short_description: "Reconstruct framed references as editable Figma UI"
+  default_prompt: "Use $figma-compozer to reconstruct the UI reference images in these Figma frames as editable screens with matching frame dimensions and corners."

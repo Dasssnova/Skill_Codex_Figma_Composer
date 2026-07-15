@@ -1,6 +1,6 @@
 ---
 name: figma-compozer
-description: Reconstruct mobile UI screenshots or visual references found in Figma as pixel-accurate, structured, editable Figma screens. Use when a user provides a Figma file or node link and asks Codex to analyze layers named exactly `Composition__reference`, recreate their visible mobile interfaces, reproduce typography and geometry, or return editable 393 x 852 UI frames in the same Figma file.
+description: Reconstruct UI screenshots or visual references placed inside Figma frames as pixel-accurate, structured, editable Figma screens. Use when a user provides a Figma file or node link and asks Codex to find reference images regardless of layer or frame names, recreate their visible interfaces, preserve each source frame's dimensions and corner geometry, or reproduce typography and layout as editable layers in the same Figma file.
 ---
 
 # Reconstruct Mobile UI in Figma
@@ -17,13 +17,14 @@ Rebuild every valid reference directly in the supplied Figma file. Treat the ref
 ## Workflow
 
 1. Open the target file and inspect its page and layer structure.
-2. Find only layers whose name is exactly `Composition__reference`. Ignore all near matches and all other visual material as reconstruction evidence.
-3. Inspect each valid reference independently. Capture enough visual context to measure the actual viewport, typography, geometry, colors, effects, clipping, and layer order. Identify the heading and body families, styles, optical weights, stroke construction, and font pairing from zero for that reference; never inherit them from another reference. For serif text, classify the serif construction and compare at least three plausible available families; never default to DM Serif.
-4. Determine the screen count before writing. Treat references as separate screens unless they clearly form one continuous screen.
-5. Reconstruct incrementally in native Figma layers. Create one editable `393 x 852` root frame per screen and name frames `Screen 01`, `Screen 02`, and so on.
-6. Preserve the specification's priority order. Do not normalize styles across independent references and do not turn screenshot pixels into the final UI.
-7. Keep generated frames near the source references without covering or modifying them. Do not alter unrelated user content.
-8. Inspect the completed frames again at screen scale. Correct typography, wrapping, bounds, overlaps, clipping, spacing, rotations, and obvious visual mismatches.
+2. Within the user-supplied selection, linked node, or clearly designated input area, find image layers that serve as complete UI references inside parent Figma frames. Ignore all layer and frame names when deciding validity; names may use any wording, abbreviation, language, or spelling.
+3. Treat each parent frame containing a complete UI reference image as one independent source frame. Record its exact width, height, clipping, four corner radii, and Corner smoothing before analyzing the image.
+4. Inspect each valid reference independently. Capture enough visual context to measure the viewport, typography, geometry, colors, effects, clipping, and layer order in the coordinate system of its parent source frame. Identify the heading and body families, styles, optical weights, stroke construction, and font pairing from zero for that reference; never inherit them from another reference. For serif text, classify the serif construction and compare at least three plausible available families; never default to DM Serif.
+5. Determine the screen count before writing. Treat source frames as separate screens unless their image content clearly forms one continuous screen.
+6. Reconstruct incrementally in native Figma layers. Create one editable root frame per source frame with exactly the same width and height. Copy the source frame's corner radii, Corner smoothing, and clipping behavior. Name outputs `Screen 01`, `Screen 02`, and so on.
+7. Preserve the specification's priority order. Do not normalize styles across independent references and do not turn screenshot pixels into the final UI.
+8. Keep generated frames near the source references without covering or modifying them. Do not alter unrelated user content.
+9. Inspect the completed frames again at screen scale. Confirm that every output frame matches its source frame dimensions and corner geometry, then correct typography, wrapping, bounds, overlaps, clipping, spacing, rotations, and obvious visual mismatches.
 
 ## Execution rules
 
