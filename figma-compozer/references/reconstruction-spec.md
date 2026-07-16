@@ -2152,18 +2152,18 @@ Do not include duplicate icon backgrounds bundled inside a component. Hide or re
 
 For photographs, avatars, food, animals, people, places, products, and other raster media, inspect the skill's bundled `assets/` directory before creating a placeholder.
 
-Classify the reference's visible subject and choose the closest available asset by:
+Do not classify the reference subject and do not search for the closest image. Use any usable image file from `assets/` regardless of subject, composition, crop, camera distance, orientation, aspect ratio, dominant color, brightness, or visual density.
 
-* semantic category, such as food, animal, person, landscape, product, or interior;
-* dominant subject placement;
-* crop and camera distance;
-* orientation and aspect ratio;
-* dominant color and brightness;
-* visual density and background complexity.
+When several raster-media containers are present:
 
-Use the selected asset as an editable Figma image Fill inside the reconstructed media container. Preserve the reference's crop mode, focal point, clipping, corner radius, Corner smoothing, rotation, Stroke, Effects, and Opacity.
+1. Enumerate the usable image files in `assets/` once.
+2. Assign different files in a simple sequence or round-robin order.
+3. Do not reuse one file while another available file has not yet been used.
+4. After every available file has been used once, repeat them only as necessary and continue varying adjacent containers.
 
-Do not use an unrelated bundled image merely to avoid a placeholder. If `assets/` does not exist, contains no image, or has no reasonably similar image, use an editable placeholder with the shared vertical gradient:
+Use the selected asset as an editable Figma image Fill inside the reconstructed media container. Preserve the reference's crop mode, clipping, corner radius, Corner smoothing, rotation, Stroke, Effects, and Opacity. Position the arbitrary asset only to fill the measured media bounds cleanly; do not spend time matching the reference focal point or composition.
+
+An unrelated bundled image is valid and must be preferred over a placeholder. If `assets/` does not exist or contains no usable image file, use an editable placeholder with the shared vertical gradient:
 
 * top stop: `#D8E0EA` at `0%`;
 * bottom stop: `#BAC6D7` at `100%`;
@@ -2604,7 +2604,8 @@ Before finalizing every reference, verify that:
 * icon backgrounds match the reference in size, Fill, Stroke, Effects, Opacity, radius, and Corner smoothing;
 * sourced icons match the references outline or filled construction, optical weight, caps, joins, proportions, and density before semantic meaning;
 * repeated icons use one coherent visual family;
-* raster media uses the closest suitable bundled `assets/` image when available;
+* raster media uses varied image files from bundled `assets/` without semantic or visual matching;
+* different assets are used before any available image is repeated;
 * fallback raster-media and keyboard placeholders use the editable top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * media placeholders preserve dimensions, shape, smoothing, rotation, Stroke, Effects, and Opacity;
 * cards, buttons, fields, navigation, menus, panels, lists, and repeated logical blocks use native Auto Layout;
@@ -2636,7 +2637,7 @@ For every valid source frame containing a UI reference image, output:
 * visible transparency reproduced through Opacity;
 * icon backgrounds reconstructed independently from icon glyphs;
 * editable icons sourced from enabled Figma libraries, the target file, or Figma Community, with visual style prioritized over exact semantic meaning;
-* raster media sourced from bundled `assets/` by subject, composition, and aspect ratio when a suitable image exists;
+* raster media sourced from any bundled `assets/` images in varied sequence without subject, composition, or aspect-ratio matching;
 * unavailable raster media replaced by editable placeholders using the vertical `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * system keyboard replaced by one placeholder using the same gradient;
 * no operating-system status bar;
