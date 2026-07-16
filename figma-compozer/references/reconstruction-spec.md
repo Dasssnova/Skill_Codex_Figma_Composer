@@ -1387,6 +1387,28 @@ Check for:
 
 Do not assume that every gradient is linear.
 
+Analyze the color field before choosing a Figma paint type. Inspect the full surface and compare color changes along horizontal, vertical, diagonal, and center-to-edge paths:
+
+1. Find regions of minimum and maximum luminance, saturation, and opacity.
+2. Trace whether equal-color bands are parallel, concentric or elliptical, rotational, diamond-shaped, or irregularly overlapping.
+3. Locate the apparent origin of each transition. Allow centers and gradient handles to fall outside the element bounds when the visible crop supports it.
+4. Separate independent color blooms. A second local maximum with its own falloff usually requires another gradient Fill rather than an extra stop in the first gradient.
+5. Check edges and corners for vignetting, clipped radial falloff, or a global overlay.
+6. Classify each contribution as a surface Fill, Background blur, Layer blur, shadow, glow, reflection, or transparency before writing.
+
+Use these signatures:
+
+* approximately parallel color bands → Linear;
+* color radiating from one point with circular or elliptical contours → Radial;
+* hue or brightness rotating around a point → Angular;
+* straight diagonal contours expanding from a center → Diamond;
+* several distinct centers or directional fields → multiple ordered Fill entries;
+* softened content that remains recognizable behind a translucent surface → Background blur;
+* softened edges and content of the painted object itself → Layer blur;
+* a soft field extending beyond the object boundary → shadow or glow Effect.
+
+Do not infer gradient type from one narrow crop or one sampled line. Do not treat screenshot softness, compression bands, or antialiasing as gradient stops.
+
 # Linear Gradients
 
 When the reference contains a linear gradient:
@@ -1422,7 +1444,18 @@ When the reference contains a radial highlight, glow, vignette, or color bloom:
 * identify opacity transitions;
 * use a native Figma Radial gradient.
 
+Set the Radial Fill geometry explicitly:
+
+1. Place the center at the inferred origin, including fractional or off-canvas positions.
+2. Set horizontal and vertical handles independently to reproduce circular or elliptical falloff.
+3. Match the visible inner plateau, transition width, and outer falloff with stop positions rather than compensating with layer opacity.
+4. Use transparent outer stops when the bloom fades into lower fills; use an opaque edge color when the surface itself changes color.
+5. Confirm whether the apparent center belongs to the local element or to the global screen composition.
+6. Reinspect the four edges and corners after applying the Fill; correct the center, radii, and stop positions before changing colors.
+
 Do not imitate a radial gradient using a large blurred circle unless the reference is specifically a shadow or glow effect rather than a surface fill.
+
+Do not force an elliptical, cropped, or off-center radial field into a centered circular gradient.
 
 # Angular and Diamond Gradients
 
@@ -1490,6 +1523,19 @@ Preserve the fill order.
 
 Do not flatten multiple visible fills into one approximate color.
 
+# Complex and Mesh-Like Color Fields
+
+Figma does not require a raster image to reproduce a complex color field. Decompose the field into the smallest editable native construction that explains the reference:
+
+1. Add the stable base color or broadest gradient first.
+2. Add one native Radial, Linear, Angular, or Diamond Fill for each independent directional field or color bloom.
+3. Use transparent stops so upper fills reveal the lower fills instead of baking composited colors into opaque stops.
+4. Preserve Fill order and set paint opacity or blend mode only when the reference visibly requires that compositing behavior.
+5. If one node cannot express the field with native Fill entries, use the minimum number of clipped native Figma shapes, each with its own gradient Fill. Keep them inside the surface container and preserve editability.
+6. Reserve blurred vector shapes for a genuine diffuse light or glow whose soft boundary cannot be expressed by gradient handles; keep the shape editable and apply native Layer blur.
+
+Prefer fewer well-positioned gradient handles over many stops or many overlapping shapes. Do not approximate a multi-origin field with one Linear gradient. Do not use a screenshot, image Fill, flattened export, or pixel-colored mosaic for a reconstructable color field.
+
 # Gradient and Blur Distinction
 
 Distinguish between:
@@ -1510,6 +1556,8 @@ Use Opacity for transparency.
 Do not use a gradient to simulate a shadow when the reference shows an actual external shadow.
 
 Do not use blur to simulate a visible color gradient.
+
+When gradient and blur coexist, reconstruct and tune them separately. First match the unblurred Fill topology and colors, then add the native blur Effect and retune only the blur radius and affected opacity. Do not change gradient type or add stops merely to compensate for blur softness.
 
 # Gradient Rotation
 
@@ -1843,6 +1891,15 @@ For frosted or glass-like surfaces:
 
 Do not use Layer blur when the reference shows a blurred background through a transparent surface.
 
+Determine blur from evidence at boundaries and across underlying content:
+
+* if only content seen through the surface loses detail while the surface boundary stays crisp, use Background blur;
+* if the element's own Fill, Stroke, and edges soften together, use Layer blur;
+* if softness extends outward while the source surface stays crisp, use a Drop shadow or glow-like shadow;
+* if a colored bloom has a stable center-to-edge color progression contained by the surface, use a gradient Fill, not blur.
+
+Estimate blur radius after matching element scale. Inspect a high-contrast edge or recognizable background detail and tune the native Effect until its spatial falloff matches. Keep Fill opacity, layer Opacity, and blur radius independent; do not reduce opacity to disguise an incorrect blur radius.
+
 # Glow
 
 When the reference contains a soft glow:
@@ -1870,6 +1927,8 @@ Do not merge clearly different effects into one approximate shadow.
 
 Analyze transparency independently from hue, lightness, gradient, blur, glow, and shadow.
 
+Default to testing translucency, not opacity. Never copy the sampled on-screen RGB directly into an opaque Fill until the compositing hypothesis has been checked against the local background.
+
 Before assigning an opaque color, test whether the visible result is produced by compositing over the background. Use the following evidence:
 
 * background color or content remains partially visible through the element;
@@ -1880,6 +1939,23 @@ Before assigning an opaque color, test whether the visible result is produced by
 * repeated states reveal an opaque and a translucent version of the same base color;
 * overlapping translucent layers become denser where they intersect;
 * a disabled or inactive state preserves hue while reducing visual density.
+
+# Background-Comparison Transparency Test
+
+For every surface whose opacity is uncertain:
+
+1. Sample or estimate the background immediately outside the object (`B`) and the visible object interior (`O`) away from strokes, text, shadows, and antialiased edges.
+2. Compare hue family first, then saturation and lightness. Treat colors as close when they share the same dominant hue and the object mainly appears as a lighter, darker, or less saturated version of the background.
+3. When `O` and `B` are close shades, set the working probability of translucency to `90%`. Start reconstruction with a translucent Fill and require contrary visual evidence before changing it to opaque.
+4. Infer a plausible uncomposited foreground color (`F`) from the same semantic surface elsewhere, a repeated state, a highlight or border family, or the simplest neutral/tinted source that explains the result.
+5. Test the composite relation `O = alpha × F + (1 - alpha) × B` across RGB channels. Try nearby alpha values in Figma over the actual reconstructed background and select the value that explains all channels without baking the background into `F`.
+6. If the object crosses two backgrounds, compare both regions. A translucent object keeps one `F` and one alpha while its observed color shifts toward each underlying background. Reject an opaque Fill when one sampled RGB cannot explain both regions.
+7. Inspect intersections. Greater density where translucent layers overlap supports transparency; unchanged color across different backgrounds supports opacity.
+8. If the evidence remains ambiguous after these tests, choose translucency. Use the narrowest native Figma control that can express it.
+
+Do not use the 90% rule as the final alpha value. It is a confidence prior for classifying the layer as translucent; estimate the actual Fill, paint, stop, effect, child, or layer opacity separately.
+
+Evidence strong enough to override the transparency prior includes a sharply bounded surface whose interior stays identical over clearly different backgrounds, an independently repeated solid token with the same uncomposited color, or a source construction that visibly occludes all underlying detail. A small color difference alone is not enough to classify the object as opaque.
 
 Exclude misleading causes before estimating opacity:
 
@@ -1892,6 +1968,8 @@ Exclude misleading causes before estimating opacity:
 * image content already containing baked transparency.
 
 Estimate the base color and opacity together. When a plausible base color is visible elsewhere in the same reference, compare the composited result against that instance. Test nearby opacity values in Figma and choose the percentage that preserves both the foreground hue and the amount of background showing through.
+
+Do not validate opacity over a neutral test rectangle when the element sits over a colored, gradient, image, or layered background. Test it in place over the reconstructed local background, because the same translucent Fill produces different visible colors over different pixels.
 
 Reproduce transparency with native Figma opacity controls. Determine whether opacity applies to:
 
@@ -2337,6 +2415,14 @@ Before finalizing every gradient, verify that:
 * rotation preserves the visible gradient direction;
 * related gradients are consolidated only within the same reference;
 * the gradient remains editable through native Figma Fill settings.
+* radial centers may be off-canvas when supported by the reference;
+* radial horizontal and vertical radii match independently;
+* separate color blooms are represented by separate ordered Fill entries;
+* mesh-like fields use the minimum sufficient native Fill or clipped-shape construction;
+* no Linear approximation replaced a supported Radial, Angular, Diamond, or layered configuration;
+* blur was added only after the underlying Fill topology was matched;
+
+Validate complex gradients in at least two passes. In the first pass compare the large-scale color topology: origins, directions, radii, coverage, and layer order. In the second pass compare stop colors, stop positions, opacity, blend behavior, and blur. Correct geometry before fine-tuning color because incorrect handles can make correct colors appear wrong.
 
 # Corner Validation
 
@@ -2365,6 +2451,10 @@ Before finalizing every styled element, verify that:
 * every visible inner shadow uses Figma Inner shadow;
 * shadow offset, blur, spread, color, and opacity match;
 * Background blur is not confused with Layer blur;
+* every uncertain surface was tested against its immediate background before an opaque RGB was accepted;
+* close object/background hues used the 90% translucency prior and were made opaque only when contrary evidence was found;
+* ambiguous cases resolve to native transparency rather than a background-mixed solid color;
+* the chosen foreground RGB and opacity reproduce the observed composite over every background the object crosses;
 * transparent fills use Fill opacity;
 * transparent strokes use stroke-paint opacity;
 * transparent shadows use effect opacity;
