@@ -392,7 +392,9 @@ Do not invent hidden dimensions or hidden content.
 
 # Reconstruction Order
 
-For every reference, follow this order:
+Build only one independent reference at a time. Discover all source frames and establish their output order first, then complete the following sequence for one reference before writing nodes for the next reference.
+
+For the active reference, follow this order:
 
 1. Detect the complete viewport.
 2. Calibrate it to its parent source frame's exact coordinate system and dimensions.
@@ -422,6 +424,17 @@ For every reference, follow this order:
 26. Validate the complete geometry.
 27. Compare the result against the reference.
 28. Correct visible differences.
+
+Split the write phase into small `use_figma` calls with no more than 10 logical operations per call. Treat creation or mutation of one node together with its properties and parenting as one logical operation. Build the outer frame and major-region skeleton first, then populate one coherent UI block per call.
+
+After every major block:
+
+1. Return all created and mutated node IDs.
+2. Capture the active root frame or completed block as a screenshot.
+3. Compare it with the same region in the source reference.
+4. Correct visible geometry, typography, clipping, Fill, gradient, opacity, blur, Stroke, and overlap errors before continuing.
+
+Do not postpone known errors until the complete screen is built. Do not start another independent source frame while the active screen has placeholders, unverified blocks, known mismatches, or missing final validation.
 
 Do not start by creating generic UI components.
 
@@ -1387,6 +1400,28 @@ Check for:
 
 Do not assume that every gradient is linear.
 
+Analyze the color field before choosing a Figma paint type. Inspect the full surface and compare color changes along horizontal, vertical, diagonal, and center-to-edge paths:
+
+1. Find regions of minimum and maximum luminance, saturation, and opacity.
+2. Trace whether equal-color bands are parallel, concentric or elliptical, rotational, diamond-shaped, or irregularly overlapping.
+3. Locate the apparent origin of each transition. Allow centers and gradient handles to fall outside the element bounds when the visible crop supports it.
+4. Separate independent color blooms. A second local maximum with its own falloff usually requires another gradient Fill rather than an extra stop in the first gradient.
+5. Check edges and corners for vignetting, clipped radial falloff, or a global overlay.
+6. Classify each contribution as a surface Fill, Background blur, Layer blur, shadow, glow, reflection, or transparency before writing.
+
+Use these signatures:
+
+* approximately parallel color bands → Linear;
+* color radiating from one point with circular or elliptical contours → Radial;
+* hue or brightness rotating around a point → Angular;
+* straight diagonal contours expanding from a center → Diamond;
+* several distinct centers or directional fields → multiple ordered Fill entries;
+* softened content that remains recognizable behind a translucent surface → Background blur;
+* softened edges and content of the painted object itself → Layer blur;
+* a soft field extending beyond the object boundary → shadow or glow Effect.
+
+Do not infer gradient type from one narrow crop or one sampled line. Do not treat screenshot softness, compression bands, or antialiasing as gradient stops.
+
 # Linear Gradients
 
 When the reference contains a linear gradient:
@@ -1422,7 +1457,18 @@ When the reference contains a radial highlight, glow, vignette, or color bloom:
 * identify opacity transitions;
 * use a native Figma Radial gradient.
 
+Set the Radial Fill geometry explicitly:
+
+1. Place the center at the inferred origin, including fractional or off-canvas positions.
+2. Set horizontal and vertical handles independently to reproduce circular or elliptical falloff.
+3. Match the visible inner plateau, transition width, and outer falloff with stop positions rather than compensating with layer opacity.
+4. Use transparent outer stops when the bloom fades into lower fills; use an opaque edge color when the surface itself changes color.
+5. Confirm whether the apparent center belongs to the local element or to the global screen composition.
+6. Reinspect the four edges and corners after applying the Fill; correct the center, radii, and stop positions before changing colors.
+
 Do not imitate a radial gradient using a large blurred circle unless the reference is specifically a shadow or glow effect rather than a surface fill.
+
+Do not force an elliptical, cropped, or off-center radial field into a centered circular gradient.
 
 # Angular and Diamond Gradients
 
@@ -1490,6 +1536,19 @@ Preserve the fill order.
 
 Do not flatten multiple visible fills into one approximate color.
 
+# Complex and Mesh-Like Color Fields
+
+Figma does not require a raster image to reproduce a complex color field. Decompose the field into the smallest editable native construction that explains the reference:
+
+1. Add the stable base color or broadest gradient first.
+2. Add one native Radial, Linear, Angular, or Diamond Fill for each independent directional field or color bloom.
+3. Use transparent stops so upper fills reveal the lower fills instead of baking composited colors into opaque stops.
+4. Preserve Fill order and set paint opacity or blend mode only when the reference visibly requires that compositing behavior.
+5. If one node cannot express the field with native Fill entries, use the minimum number of clipped native Figma shapes, each with its own gradient Fill. Keep them inside the surface container and preserve editability.
+6. Reserve blurred vector shapes for a genuine diffuse light or glow whose soft boundary cannot be expressed by gradient handles; keep the shape editable and apply native Layer blur.
+
+Prefer fewer well-positioned gradient handles over many stops or many overlapping shapes. Do not approximate a multi-origin field with one Linear gradient. Do not use a screenshot, image Fill, flattened export, or pixel-colored mosaic for a reconstructable color field.
+
 # Gradient and Blur Distinction
 
 Distinguish between:
@@ -1510,6 +1569,8 @@ Use Opacity for transparency.
 Do not use a gradient to simulate a shadow when the reference shows an actual external shadow.
 
 Do not use blur to simulate a visible color gradient.
+
+When gradient and blur coexist, reconstruct and tune them separately. First match the unblurred Fill topology and colors, then add the native blur Effect and retune only the blur radius and affected opacity. Do not change gradient type or add stops merely to compensate for blur softness.
 
 # Gradient Rotation
 
@@ -1843,6 +1904,15 @@ For frosted or glass-like surfaces:
 
 Do not use Layer blur when the reference shows a blurred background through a transparent surface.
 
+Determine blur from evidence at boundaries and across underlying content:
+
+* if only content seen through the surface loses detail while the surface boundary stays crisp, use Background blur;
+* if the element's own Fill, Stroke, and edges soften together, use Layer blur;
+* if softness extends outward while the source surface stays crisp, use a Drop shadow or glow-like shadow;
+* if a colored bloom has a stable center-to-edge color progression contained by the surface, use a gradient Fill, not blur.
+
+Estimate blur radius after matching element scale. Inspect a high-contrast edge or recognizable background detail and tune the native Effect until its spatial falloff matches. Keep Fill opacity, layer Opacity, and blur radius independent; do not reduce opacity to disguise an incorrect blur radius.
+
 # Glow
 
 When the reference contains a soft glow:
@@ -1870,6 +1940,8 @@ Do not merge clearly different effects into one approximate shadow.
 
 Analyze transparency independently from hue, lightness, gradient, blur, glow, and shadow.
 
+Default to testing translucency, not opacity. Never copy the sampled on-screen RGB directly into an opaque Fill until the compositing hypothesis has been checked against the local background.
+
 Before assigning an opaque color, test whether the visible result is produced by compositing over the background. Use the following evidence:
 
 * background color or content remains partially visible through the element;
@@ -1880,6 +1952,23 @@ Before assigning an opaque color, test whether the visible result is produced by
 * repeated states reveal an opaque and a translucent version of the same base color;
 * overlapping translucent layers become denser where they intersect;
 * a disabled or inactive state preserves hue while reducing visual density.
+
+# Background-Comparison Transparency Test
+
+For every surface whose opacity is uncertain:
+
+1. Sample or estimate the background immediately outside the object (`B`) and the visible object interior (`O`) away from strokes, text, shadows, and antialiased edges.
+2. Compare hue family first, then saturation and lightness. Treat colors as close when they share the same dominant hue and the object mainly appears as a lighter, darker, or less saturated version of the background.
+3. When `O` and `B` are close shades, set the working probability of translucency to `90%`. Start reconstruction with a translucent Fill and require contrary visual evidence before changing it to opaque.
+4. Infer a plausible uncomposited foreground color (`F`) from the same semantic surface elsewhere, a repeated state, a highlight or border family, or the simplest neutral/tinted source that explains the result.
+5. Test the composite relation `O = alpha × F + (1 - alpha) × B` across RGB channels. Try nearby alpha values in Figma over the actual reconstructed background and select the value that explains all channels without baking the background into `F`.
+6. If the object crosses two backgrounds, compare both regions. A translucent object keeps one `F` and one alpha while its observed color shifts toward each underlying background. Reject an opaque Fill when one sampled RGB cannot explain both regions.
+7. Inspect intersections. Greater density where translucent layers overlap supports transparency; unchanged color across different backgrounds supports opacity.
+8. If the evidence remains ambiguous after these tests, choose translucency. Use the narrowest native Figma control that can express it.
+
+Do not use the 90% rule as the final alpha value. It is a confidence prior for classifying the layer as translucent; estimate the actual Fill, paint, stop, effect, child, or layer opacity separately.
+
+Evidence strong enough to override the transparency prior includes a sharply bounded surface whose interior stays identical over clearly different backgrounds, an independently repeated solid token with the same uncomposited color, or a source construction that visibly occludes all underlying detail. A small color difference alone is not enough to classify the object as opaque.
 
 Exclude misleading causes before estimating opacity:
 
@@ -1892,6 +1981,8 @@ Exclude misleading causes before estimating opacity:
 * image content already containing baked transparency.
 
 Estimate the base color and opacity together. When a plausible base color is visible elsewhere in the same reference, compare the composited result against that instance. Test nearby opacity values in Figma and choose the percentage that preserves both the foreground hue and the amount of background showing through.
+
+Do not validate opacity over a neutral test rectangle when the element sits over a colored, gradient, image, or layered background. Test it in place over the reconstructed local background, because the same translucent Fill produces different visible colors over different pixels.
 
 Reproduce transparency with native Figma opacity controls. Determine whether opacity applies to:
 
@@ -2002,7 +2093,7 @@ For every icon-bearing element, identify and create separate editable layers for
 1. The screen, card, panel, or navigation background.
 2. The button or control container when present.
 3. The icon background or badge when present.
-4. The icon glyph itself.
+4. The icon vector itself.
 
 An icon background may be a circle, rounded rectangle, squircle, pill, irregular badge, translucent surface, or gradient surface. Reconstruct it from the reference with its own:
 
@@ -2015,9 +2106,9 @@ An icon background may be a circle, rounded rectangle, squircle, pill, irregular
 * Corner smoothing;
 * rotation;
 * clipping;
-* padding and alignment around the glyph.
+* padding and alignment around the vector artwork.
 
-Never apply the icon glyph's Fill to its background or use the background shape as a substitute for the glyph. Do not remove a visible icon background merely because a library icon already includes a bounding box.
+Never apply the icon vector's Fill to its background or use the background shape as a substitute for the icon. Do not remove a visible icon background merely because a library icon already includes a bounding box.
 
 ## Icon Style Identification
 
@@ -2040,14 +2131,27 @@ Treat icon style as more important than exact semantic meaning.
 
 ## Icon Source Order
 
+Every icon must resolve to editable vector geometry: a `VECTOR`, vector-backed component or instance, or editable vector group. Text is not an icon source.
+
+Never use:
+
+* Unicode characters or typographic symbols;
+* emoji, colored emoji, or emoji-style text;
+* icon fonts or symbol fonts;
+* letters, punctuation, dingbats, arrows, or geometric characters inside text layers;
+* text converted to outlines as a workaround for a missing vector icon;
+* raster icons.
+
 Use this order for every icon:
 
 1. Search enabled Figma libraries and components already available in the target file.
 2. Search relevant icon components or vectors elsewhere in the supplied Figma file.
 3. Search Figma Community icon libraries or files when available through the connected Figma workflow.
-4. Use another editable icon from the closest visual family when an exact semantic match is unavailable.
+4. Use another editable vector icon from the closest visual family when an exact semantic match is unavailable.
 
-Prefer an editable component instance or vector. Preserve component provenance when inserting a library icon. Do not rasterize icons or trace screenshot pixels when an appropriate editable icon exists.
+Verify that a library or Community component actually contains vector artwork rather than a font-backed text node. Prefer an editable component instance or vector and preserve component provenance when inserting it. Do not rasterize icons or trace screenshot pixels when an appropriate editable icon exists.
+
+If no semantically matching vector exists, use a visually compatible neutral vector icon. If no vector candidate is available at all, create a minimal neutral placeholder from native vector paths or basic vector shapes; never fall back to a font glyph or emoji.
 
 When comparing candidates, prioritize:
 
@@ -2062,7 +2166,7 @@ For example, when the reference shows a filled search icon but no matching fille
 
 After insertion:
 
-* fit the icon to the measured glyph bounds, not only its nominal component frame;
+* fit the icon to the measured vector bounds, not only its nominal component frame;
 * preserve the observed icon-to-background padding;
 * match Fill, Stroke, Opacity, and rotation;
 * keep repeated icons from the same visible family stylistically consistent;
@@ -2074,18 +2178,18 @@ Do not include duplicate icon backgrounds bundled inside a component. Hide or re
 
 For photographs, avatars, food, animals, people, places, products, and other raster media, inspect the skill's bundled `assets/` directory before creating a placeholder.
 
-Classify the reference's visible subject and choose the closest available asset by:
+Do not classify the reference subject and do not search for the closest image. Use any usable image file from `assets/` regardless of subject, composition, crop, camera distance, orientation, aspect ratio, dominant color, brightness, or visual density.
 
-* semantic category, such as food, animal, person, landscape, product, or interior;
-* dominant subject placement;
-* crop and camera distance;
-* orientation and aspect ratio;
-* dominant color and brightness;
-* visual density and background complexity.
+When several raster-media containers are present:
 
-Use the selected asset as an editable Figma image Fill inside the reconstructed media container. Preserve the reference's crop mode, focal point, clipping, corner radius, Corner smoothing, rotation, Stroke, Effects, and Opacity.
+1. Enumerate the usable image files in `assets/` once.
+2. Assign different files in a simple sequence or round-robin order.
+3. Do not reuse one file while another available file has not yet been used.
+4. After every available file has been used once, repeat them only as necessary and continue varying adjacent containers.
 
-Do not use an unrelated bundled image merely to avoid a placeholder. If `assets/` does not exist, contains no image, or has no reasonably similar image, use an editable placeholder with the shared vertical gradient:
+Use the selected asset as an editable Figma image Fill inside the reconstructed media container. Preserve the reference's crop mode, clipping, corner radius, Corner smoothing, rotation, Stroke, Effects, and Opacity. Position the arbitrary asset only to fill the measured media bounds cleanly; do not spend time matching the reference focal point or composition.
+
+An unrelated bundled image is valid and must be preferred over a placeholder. If `assets/` does not exist or contains no usable image file, use an editable placeholder with the shared vertical gradient:
 
 * top stop: `#D8E0EA` at `0%`;
 * bottom stop: `#BAC6D7` at `100%`;
@@ -2337,6 +2441,14 @@ Before finalizing every gradient, verify that:
 * rotation preserves the visible gradient direction;
 * related gradients are consolidated only within the same reference;
 * the gradient remains editable through native Figma Fill settings.
+* radial centers may be off-canvas when supported by the reference;
+* radial horizontal and vertical radii match independently;
+* separate color blooms are represented by separate ordered Fill entries;
+* mesh-like fields use the minimum sufficient native Fill or clipped-shape construction;
+* no Linear approximation replaced a supported Radial, Angular, Diamond, or layered configuration;
+* blur was added only after the underlying Fill topology was matched;
+
+Validate complex gradients in at least two passes. In the first pass compare the large-scale color topology: origins, directions, radii, coverage, and layer order. In the second pass compare stop colors, stop positions, opacity, blend behavior, and blur. Correct geometry before fine-tuning color because incorrect handles can make correct colors appear wrong.
 
 # Corner Validation
 
@@ -2365,6 +2477,10 @@ Before finalizing every styled element, verify that:
 * every visible inner shadow uses Figma Inner shadow;
 * shadow offset, blur, spread, color, and opacity match;
 * Background blur is not confused with Layer blur;
+* every uncertain surface was tested against its immediate background before an opaque RGB was accepted;
+* close object/background hues used the 90% translucency prior and were made opaque only when contrary evidence was found;
+* ambiguous cases resolve to native transparency rather than a background-mixed solid color;
+* the chosen foreground RGB and opacity reproduce the observed composite over every background the object crosses;
 * transparent fills use Fill opacity;
 * transparent strokes use stroke-paint opacity;
 * transparent shadows use effect opacity;
@@ -2510,11 +2626,14 @@ Before finalizing every reference, verify that:
 * gradients were not rasterized;
 * effects were not included in element dimensions;
 * global perspective was not mistaken for intentional rotation;
-* every icon glyph is separated from its icon background, control container, and surrounding surface;
+* every icon vector is separated from its icon background, control container, and surrounding surface;
 * icon backgrounds match the reference in size, Fill, Stroke, Effects, Opacity, radius, and Corner smoothing;
 * sourced icons match the references outline or filled construction, optical weight, caps, joins, proportions, and density before semantic meaning;
 * repeated icons use one coherent visual family;
-* raster media uses the closest suitable bundled `assets/` image when available;
+* every icon is vector-backed and editable;
+* no icon uses a text layer, Unicode symbol, emoji, icon font, symbol font, converted font outline, or raster image;
+* raster media uses varied image files from bundled `assets/` without semantic or visual matching;
+* different assets are used before any available image is repeated;
 * fallback raster-media and keyboard placeholders use the editable top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * media placeholders preserve dimensions, shape, smoothing, rotation, Stroke, Effects, and Opacity;
 * cards, buttons, fields, navigation, menus, panels, lists, and repeated logical blocks use native Auto Layout;
@@ -2544,9 +2663,10 @@ For every valid source frame containing a UI reference image, output:
 * visible borders reproduced through Stroke;
 * visible shadows, blur, and glow reproduced through Effects;
 * visible transparency reproduced through Opacity;
-* icon backgrounds reconstructed independently from icon glyphs;
-* editable icons sourced from enabled Figma libraries, the target file, or Figma Community, with visual style prioritized over exact semantic meaning;
-* raster media sourced from bundled `assets/` by subject, composition, and aspect ratio when a suitable image exists;
+* icon backgrounds reconstructed independently from icon vectors;
+* editable vector icons sourced from enabled Figma libraries, the target file, or Figma Community, with visual style prioritized over exact semantic meaning;
+* no font character, Unicode symbol, emoji, or raster image used as an icon;
+* raster media sourced from any bundled `assets/` images in varied sequence without subject, composition, or aspect-ratio matching;
 * unavailable raster media replaced by editable placeholders using the vertical `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * system keyboard replaced by one placeholder using the same gradient;
 * no operating-system status bar;
