@@ -392,7 +392,9 @@ Do not invent hidden dimensions or hidden content.
 
 # Reconstruction Order
 
-For every reference, follow this order:
+Build only one independent reference at a time. Discover all source frames and establish their output order first, then complete the following sequence for one reference before writing nodes for the next reference.
+
+For the active reference, follow this order:
 
 1. Detect the complete viewport.
 2. Calibrate it to its parent source frame's exact coordinate system and dimensions.
@@ -422,6 +424,17 @@ For every reference, follow this order:
 26. Validate the complete geometry.
 27. Compare the result against the reference.
 28. Correct visible differences.
+
+Split the write phase into small `use_figma` calls with no more than 10 logical operations per call. Treat creation or mutation of one node together with its properties and parenting as one logical operation. Build the outer frame and major-region skeleton first, then populate one coherent UI block per call.
+
+After every major block:
+
+1. Return all created and mutated node IDs.
+2. Capture the active root frame or completed block as a screenshot.
+3. Compare it with the same region in the source reference.
+4. Correct visible geometry, typography, clipping, Fill, gradient, opacity, blur, Stroke, and overlap errors before continuing.
+
+Do not postpone known errors until the complete screen is built. Do not start another independent source frame while the active screen has placeholders, unverified blocks, known mismatches, or missing final validation.
 
 Do not start by creating generic UI components.
 
