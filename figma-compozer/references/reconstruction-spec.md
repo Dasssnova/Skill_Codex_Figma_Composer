@@ -566,6 +566,59 @@ Identify typefaces by analyzing:
 * punctuation;
 * uppercase and lowercase forms.
 
+## Font Source Search
+
+Search the broadest font set available at execution time for every detected family role or complete font pair. Consider these sources without treating their order as a quality ranking:
+
+1. Fonts already available in the current Figma file.
+2. Enabled team, organization, and design-system font libraries.
+3. Local fonts exposed to Figma.
+4. System fonts exposed to Figma.
+5. Google Fonts, including variable families and Cyrillic subsets.
+6. Any other connected and legally available font source in the current Figma environment.
+
+Do not claim that a font is available until its exact family and style can be loaded and rendered in Figma. When a source is unavailable, continue with the remaining sources. Do not download or install a commercial font without explicit user authorization.
+
+## Candidate Generation and Ranking
+
+Identify heading, body, label, navigation, numeric, caption, and decorative roles independently. Decide whether the reference uses one family, multiple families, optical cuts, or a font pair before applying any font.
+
+For every detected family role or complete pair:
+
+1. Build a broad shortlist from all available sources.
+2. Compare distinctive glyph construction, proportions, x-height, cap height, width, terminals, apertures, counters, stroke contrast, serif construction, numerals, punctuation, and optical weight.
+3. Reject candidates that require excessive tracking, implausible weights, distorted text frames, or incorrect line breaks.
+4. Rank one Primary and the next three genuinely plausible alternatives.
+5. Compare complete pairs as pairs; do not construct alternatives by mixing unrelated individual heading and body candidates.
+6. Apply only the Primary candidate or pair to the reconstructed screen.
+
+Alternatives must be plausible visual matches, not merely popular fonts. Different weights or styles of one family do not count as different alternatives. Do not choose a familiar family when another candidate explains more visible features with fewer compensating adjustments.
+
+Use temporary editable comparison text when direct visual comparison is necessary. Keep candidate size, line height, tracking, width, cap height, and optical weight equivalent. Remove all temporary candidate frames and text before completion; never leave font-analysis specimens, labels, or documentation in the user's Figma file.
+
+## Cyrillic Coverage and Script Compatibility
+
+Render every Primary and alternative candidate with exactly:
+
+`Съешь ещё этих французских булок`
+
+Also render the Latin comparison line:
+
+`The quick brown fox jumps`
+
+Use the candidate weight, size, line height, tracking, and width used for comparison. Verify that Cyrillic characters come from the selected family rather than fallback glyphs, especially `С`, `ъ`, `е`, `ш`, `ь`, `ё`, `э`, `т`, `и`, `х`, `ф`, `р`, `а`, `н`, `ц`, `у`, `з`, `к`, `б`, `л`, and `о`.
+
+Compare Latin and Cyrillic at equivalent cap height and optical weight. Check:
+
+* stroke thickness and contrast;
+* x-height and cap height;
+* width and spacing rhythm;
+* terminal and serif character;
+* roundness and geometric versus humanist construction;
+* optical weight and overall color.
+
+Reject a candidate when Cyrillic is missing, visibly falls back to another family, or has a materially different design character from its Latin drawing. Prefer verified Cyrillic support when visual accuracy remains comparable. When the closest visual match lacks Cyrillic and no credible equivalent exists, keep it only for Latin text and choose the strongest compatible Cyrillic-capable candidate for any visible Cyrillic text; never allow silent fallback glyphs.
+
 ## Serif Typeface Identification
 
 When any heading or body role appears to use a serif typeface, run a dedicated serif analysis before selecting a family.
@@ -2390,6 +2443,21 @@ If geometry does not balance:
 Do not solve geometry mismatches by introducing odd or fractional pixel values.
 
 # Typography Validation
+
+Before validating text geometry, verify for every detected family role or pair that:
+
+* all available font sources were considered;
+* the selected family and style loaded and rendered successfully in Figma;
+* one Primary and three genuinely plausible alternatives were compared internally;
+* different weights of one family were not counted as separate alternatives;
+* the Primary is the closest overall match rather than the most familiar family;
+* complete heading/body pairs were ranked as complete pairs;
+* every candidate was rendered with `Съешь ещё этих французских булок` and `The quick brown fox jumps`;
+* fallback glyphs were not mistaken for native Cyrillic support;
+* Latin and Cyrillic drawing styles are visually compatible;
+* only the Primary is used in the reconstructed screen;
+* temporary candidate specimens were removed;
+* no candidate or typography decision leaked from another reference.
 
 For every shared typography style inside one reference, compare:
 
