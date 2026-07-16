@@ -2093,7 +2093,7 @@ For every icon-bearing element, identify and create separate editable layers for
 1. The screen, card, panel, or navigation background.
 2. The button or control container when present.
 3. The icon background or badge when present.
-4. The icon glyph itself.
+4. The icon vector itself.
 
 An icon background may be a circle, rounded rectangle, squircle, pill, irregular badge, translucent surface, or gradient surface. Reconstruct it from the reference with its own:
 
@@ -2106,9 +2106,9 @@ An icon background may be a circle, rounded rectangle, squircle, pill, irregular
 * Corner smoothing;
 * rotation;
 * clipping;
-* padding and alignment around the glyph.
+* padding and alignment around the vector artwork.
 
-Never apply the icon glyph's Fill to its background or use the background shape as a substitute for the glyph. Do not remove a visible icon background merely because a library icon already includes a bounding box.
+Never apply the icon vector's Fill to its background or use the background shape as a substitute for the icon. Do not remove a visible icon background merely because a library icon already includes a bounding box.
 
 ## Icon Style Identification
 
@@ -2131,14 +2131,27 @@ Treat icon style as more important than exact semantic meaning.
 
 ## Icon Source Order
 
+Every icon must resolve to editable vector geometry: a `VECTOR`, vector-backed component or instance, or editable vector group. Text is not an icon source.
+
+Never use:
+
+* Unicode characters or typographic symbols;
+* emoji, colored emoji, or emoji-style text;
+* icon fonts or symbol fonts;
+* letters, punctuation, dingbats, arrows, or geometric characters inside text layers;
+* text converted to outlines as a workaround for a missing vector icon;
+* raster icons.
+
 Use this order for every icon:
 
 1. Search enabled Figma libraries and components already available in the target file.
 2. Search relevant icon components or vectors elsewhere in the supplied Figma file.
 3. Search Figma Community icon libraries or files when available through the connected Figma workflow.
-4. Use another editable icon from the closest visual family when an exact semantic match is unavailable.
+4. Use another editable vector icon from the closest visual family when an exact semantic match is unavailable.
 
-Prefer an editable component instance or vector. Preserve component provenance when inserting a library icon. Do not rasterize icons or trace screenshot pixels when an appropriate editable icon exists.
+Verify that a library or Community component actually contains vector artwork rather than a font-backed text node. Prefer an editable component instance or vector and preserve component provenance when inserting it. Do not rasterize icons or trace screenshot pixels when an appropriate editable icon exists.
+
+If no semantically matching vector exists, use a visually compatible neutral vector icon. If no vector candidate is available at all, create a minimal neutral placeholder from native vector paths or basic vector shapes; never fall back to a font glyph or emoji.
 
 When comparing candidates, prioritize:
 
@@ -2153,7 +2166,7 @@ For example, when the reference shows a filled search icon but no matching fille
 
 After insertion:
 
-* fit the icon to the measured glyph bounds, not only its nominal component frame;
+* fit the icon to the measured vector bounds, not only its nominal component frame;
 * preserve the observed icon-to-background padding;
 * match Fill, Stroke, Opacity, and rotation;
 * keep repeated icons from the same visible family stylistically consistent;
@@ -2613,10 +2626,12 @@ Before finalizing every reference, verify that:
 * gradients were not rasterized;
 * effects were not included in element dimensions;
 * global perspective was not mistaken for intentional rotation;
-* every icon glyph is separated from its icon background, control container, and surrounding surface;
+* every icon vector is separated from its icon background, control container, and surrounding surface;
 * icon backgrounds match the reference in size, Fill, Stroke, Effects, Opacity, radius, and Corner smoothing;
 * sourced icons match the references outline or filled construction, optical weight, caps, joins, proportions, and density before semantic meaning;
 * repeated icons use one coherent visual family;
+* every icon is vector-backed and editable;
+* no icon uses a text layer, Unicode symbol, emoji, icon font, symbol font, converted font outline, or raster image;
 * raster media uses varied image files from bundled `assets/` without semantic or visual matching;
 * different assets are used before any available image is repeated;
 * fallback raster-media and keyboard placeholders use the editable top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
@@ -2648,8 +2663,9 @@ For every valid source frame containing a UI reference image, output:
 * visible borders reproduced through Stroke;
 * visible shadows, blur, and glow reproduced through Effects;
 * visible transparency reproduced through Opacity;
-* icon backgrounds reconstructed independently from icon glyphs;
-* editable icons sourced from enabled Figma libraries, the target file, or Figma Community, with visual style prioritized over exact semantic meaning;
+* icon backgrounds reconstructed independently from icon vectors;
+* editable vector icons sourced from enabled Figma libraries, the target file, or Figma Community, with visual style prioritized over exact semantic meaning;
+* no font character, Unicode symbol, emoji, or raster image used as an icon;
 * raster media sourced from any bundled `assets/` images in varied sequence without subject, composition, or aspect-ratio matching;
 * unavailable raster media replaced by editable placeholders using the vertical `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * system keyboard replaced by one placeholder using the same gradient;
