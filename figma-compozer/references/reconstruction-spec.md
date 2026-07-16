@@ -163,7 +163,7 @@ Use this priority order for every reference:
 12. Consistency between related elements inside the reference.
 13. Solid fills and gradients.
 14. Strokes, opacity, shadows, blur, and effects.
-15. Wireframe replacement of icons and visual media.
+15. Editable icon sourcing and media-asset reconstruction, with placeholders only as a fallback for unavailable raster media.
 16. Neutral replacement of the system keyboard.
 
 Do not prioritize exact text transcription over visual and typographic accuracy.
@@ -412,7 +412,7 @@ For every reference, follow this order:
 16. Normalize related dimensions and spacing.
 17. Reconstruct containers and surfaces.
 18. Reconstruct editable text layers.
-19. Add wireframe placeholders.
+19. Reconstruct icon backgrounds and source editable icons; use bundled image assets or media placeholders as required.
 20. Reproduce corner geometry.
 21. Reproduce intentional rotations.
 22. Reproduce solid fills and gradients.
@@ -1993,67 +1993,109 @@ When an element is rotated:
 
 If the gradient or shadow follows a global screen direction rather than the rotated element’s local axes, adjust the gradient handles or effect after rotation to match the reference.
 
-# Wireframe Placeholder Rule
+# Icon, Background, and Media Asset Reconstruction
 
-Do not recreate detailed:
+Do not treat an icon, its background, its button, and the surrounding screen surface as one flattened object.
 
-* icons;
-* photographs;
-* illustrations;
-* avatars;
-* logos;
-* maps;
-* charts;
-* complex graphics.
+For every icon-bearing element, identify and create separate editable layers for:
 
-Replace them with editable wireframe placeholder shapes using the shared vertical gradient.
+1. The screen, card, panel, or navigation background.
+2. The button or control container when present.
+3. The icon background or badge when present.
+4. The icon glyph itself.
 
-Use:
+An icon background may be a circle, rounded rectangle, squircle, pill, irregular badge, translucent surface, or gradient surface. Reconstruct it from the reference with its own:
 
-* a circle for circular assets;
-* a rectangle for non-circular assets.
-
-Preserve:
-
-* width;
-* height;
-* position;
-* aspect ratio;
-* alignment;
-* clipping;
+* width and height;
+* Fill or gradient;
+* Stroke;
+* Effects;
+* Opacity;
 * corner radius;
 * Corner smoothing;
 * rotation;
-* overlap;
-* spacing relative to adjacent elements;
-* Stroke belonging to the original container;
-* Effects belonging to the original container;
-* Opacity belonging to the original container.
+* clipping;
+* padding and alignment around the glyph.
 
-Use the shared placeholder Fill for every placeholder shape:
+Never apply the icon glyph's Fill to its background or use the background shape as a substitute for the glyph. Do not remove a visible icon background merely because a library icon already includes a bounding box.
 
-* native Figma linear gradient;
-* vertical direction from top to bottom;
+## Icon Style Identification
+
+Classify the visual style before searching for an icon. Determine:
+
+* outline, filled, duotone, monochrome, multicolor, or mixed construction;
+* stroke weight and optical density;
+* rounded, square, or mixed line caps;
+* rounded, bevel, or miter joins;
+* geometric, humanist, playful, technical, hand-drawn, or system character;
+* sharp versus rounded corners;
+* open versus closed counters;
+* compact versus spacious proportions;
+* level of detail and optical size;
+* grid size and glyph-to-frame ratio;
+* solid negative-space cutouts;
+* whether Fill, Stroke, or both define the glyph.
+
+Treat icon style as more important than exact semantic meaning.
+
+## Icon Source Order
+
+Use this order for every icon:
+
+1. Search enabled Figma libraries and components already available in the target file.
+2. Search relevant icon components or vectors elsewhere in the supplied Figma file.
+3. Search Figma Community icon libraries or files when available through the connected Figma workflow.
+4. Use another editable icon from the closest visual family when an exact semantic match is unavailable.
+
+Prefer an editable component instance or vector. Preserve component provenance when inserting a library icon. Do not rasterize icons or trace screenshot pixels when an appropriate editable icon exists.
+
+When comparing candidates, prioritize:
+
+1. Filled versus outline construction.
+2. Stroke weight or filled optical mass.
+3. Cap, join, and corner character.
+4. Glyph proportions and detail level.
+5. Frame occupancy and visual size.
+6. Semantic meaning.
+
+For example, when the reference shows a filled search icon but no matching filled magnifier is available, use a filled star, heart, microphone, or another semantically neutral symbol from the same visual family instead of an outline magnifier. When the reference is outline style, do not substitute a filled icon merely because its meaning is exact.
+
+After insertion:
+
+* fit the icon to the measured glyph bounds, not only its nominal component frame;
+* preserve the observed icon-to-background padding;
+* match Fill, Stroke, Opacity, and rotation;
+* keep repeated icons from the same visible family stylistically consistent;
+* detach or edit only when necessary and allowed by the component structure.
+
+Do not include duplicate icon backgrounds bundled inside a component. Hide or remove a bundled background only when it is not part of the observed reference and doing so preserves editability.
+
+## Image Assets
+
+For photographs, avatars, food, animals, people, places, products, and other raster media, inspect the skill's bundled `assets/` directory before creating a placeholder.
+
+Classify the reference's visible subject and choose the closest available asset by:
+
+* semantic category, such as food, animal, person, landscape, product, or interior;
+* dominant subject placement;
+* crop and camera distance;
+* orientation and aspect ratio;
+* dominant color and brightness;
+* visual density and background complexity.
+
+Use the selected asset as an editable Figma image Fill inside the reconstructed media container. Preserve the reference's crop mode, focal point, clipping, corner radius, Corner smoothing, rotation, Stroke, Effects, and Opacity.
+
+Do not use an unrelated bundled image merely to avoid a placeholder. If `assets/` does not exist, contains no image, or has no reasonably similar image, use an editable placeholder with the shared vertical gradient:
+
 * top stop: `#D8E0EA` at `0%`;
 * bottom stop: `#BAC6D7` at `100%`;
 * overall Fill opacity: `58%`.
 
-Keep the gradient editable and aligned to the placeholders local top and bottom bounds. Rotate the complete placeholder after applying the vertical local gradient when the original asset is rotated.
+Use a circle for circular media and a rectangle or frame for non-circular media. Keep the placeholder gradient aligned to local top and bottom bounds, then apply any observed rotation to the complete container.
 
-Do not add:
+The shared gradient is a fallback for unavailable raster media and the required system-keyboard placeholder. Do not use it behind a successfully sourced icon or image unless the reference independently shows such a background.
 
-* icon glyphs;
-* image content;
-* labels;
-* internal details;
-* unsupported borders;
-* unsupported shadows.
-
-If the original visual asset is rotated, rotate the complete placeholder container using `Position → Rotation`.
-
-Do not replace actual cards, buttons, input fields, text containers, tabs, or navigation surfaces with generic placeholders.
-
-Replace only graphical assets.
+Do not replace cards, buttons, input fields, text containers, tabs, navigation surfaces, icon backgrounds, or button containers with generic placeholders.
 
 # Buttons and Controls
 
@@ -2468,8 +2510,13 @@ Before finalizing every reference, verify that:
 * gradients were not rasterized;
 * effects were not included in element dimensions;
 * global perspective was not mistaken for intentional rotation;
-* all graphical and keyboard placeholders use the editable top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
-* wireframe placeholders preserve dimensions, shape, smoothing, rotation, Stroke, Effects, and Opacity;
+* every icon glyph is separated from its icon background, control container, and surrounding surface;
+* icon backgrounds match the reference in size, Fill, Stroke, Effects, Opacity, radius, and Corner smoothing;
+* sourced icons match the references outline or filled construction, optical weight, caps, joins, proportions, and density before semantic meaning;
+* repeated icons use one coherent visual family;
+* raster media uses the closest suitable bundled `assets/` image when available;
+* fallback raster-media and keyboard placeholders use the editable top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
+* media placeholders preserve dimensions, shape, smoothing, rotation, Stroke, Effects, and Opacity;
 * cards, buttons, fields, navigation, menus, panels, lists, and repeated logical blocks use native Auto Layout;
 * no unsupported elements were added;
 * all practical layers remain editable;
@@ -2497,7 +2544,10 @@ For every valid source frame containing a UI reference image, output:
 * visible borders reproduced through Stroke;
 * visible shadows, blur, and glow reproduced through Effects;
 * visible transparency reproduced through Opacity;
-* icons and media replaced by editable wireframe placeholders using the vertical `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
+* icon backgrounds reconstructed independently from icon glyphs;
+* editable icons sourced from enabled Figma libraries, the target file, or Figma Community, with visual style prioritized over exact semantic meaning;
+* raster media sourced from bundled `assets/` by subject, composition, and aspect ratio when a suitable image exists;
+* unavailable raster media replaced by editable placeholders using the vertical `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity;
 * system keyboard replaced by one placeholder using the same gradient;
 * no operating-system status bar;
 * no additional explanatory content.

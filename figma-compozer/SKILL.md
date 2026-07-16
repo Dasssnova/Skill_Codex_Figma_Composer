@@ -32,7 +32,8 @@ Rebuild every valid reference directly in the supplied Figma file. Treat the ref
 - Reuse styles or components only within one reference and only when the reference demonstrates repetition.
 - Build logical UI blocks such as cards, buttons, input fields, navigation bars, menus, lists, toolbars, and repeated content groups with native Figma Auto Layout. Use nested Auto Layout for internal structure and spacing levels; use absolute positioning only for visibly overlaid, floating, or independently anchored children.
 - Use editable text, frames, shapes, fills, strokes, effects, masks, and native Figma properties where they preserve the observed result.
-- Fill every icon, media, avatar, illustration, and system-keyboard placeholder with the required top-to-bottom `#D8E0EA` to `#BAC6D7` linear gradient at `58%` Fill opacity.
+- Separate every icon glyph from its icon background, button container, and surrounding surface. Reconstruct each background from the reference, then use an editable icon from enabled Figma libraries, local file components, or Figma Community with visual style taking priority over exact symbol meaning.
+- For photographs and raster media, inspect the skill's `assets/` directory first and use the closest available image by subject, composition, and aspect ratio. Use the shared placeholder gradient only when no suitable bundled asset exists. The system-keyboard placeholder always uses the required top-to-bottom `#D8E0EA` to `#BAC6D7` gradient at `58%` Fill opacity.
 - Detect continuous corners independently from radius and apply native Figma Corner smoothing whenever supported by the reference.
 - Detect translucent layers independently from light colors, gradients, blur, and shadows. Reproduce transparency with native Figma Opacity controls at the narrowest correct level instead of baking it into RGB colors.
 - Never add documentation, design-system, specimen, annotation, or showcase frames.
